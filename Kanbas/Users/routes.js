@@ -3,13 +3,58 @@ import * as courseDao from "../Courses/dao.js";
 import * as enrollmentsDao from "../Enrollments/dao.js";
 // let currentUser = null;
 export default function UserRoutes(app) {
-
   //a restful API that can make users make new users!
   const createUser = async (req, res) => {
     const user = await dao.createUser(req.body);
     res.json(user);
   };
 
+  //uses the enrollements dao to fetch courses that the user is enrolled in stored in mongodb
+  const findCoursesForUser = async (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
+    }
+
+    //if admin, respond with all courses
+    if (currentUser.role === "ADMIN") {
+      const courses = await courseDao.findAllCourses();
+      res.json(courses);
+      return;
+    }
+    let { uid } = req.params;
+    if (uid === "current") {
+      uid = currentUser._id;
+    }
+    const courses = await enrollmentsDao.findCoursesForUser(uid);
+    res.json(courses);
+  };
+  app.get("/api/users/:uid/courses", findCoursesForUser);
+
+  //uses the DAO from enrollments to implement post route
+  const enrollUserInCourse = async (req, res) => {
+    let { uid, cid } = req.params;
+    if (uid === "current") {
+      const currentUser = req.session["currentUser"];
+      uid = currentUser._id;
+    }
+    const status = await enrollmentsDao.enrollUserInCourse(uid, cid);
+    res.send(status);
+  };
+  app.post("/api/users/:uid/courses/:cid", enrollUserInCourse);
+
+  //uses the DAO from enrollments to implement delete route
+  const unenrollUserFromCourse = async (req, res) => {
+    let { uid, cid } = req.params;
+    if (uid === "current") {
+      const currentUser = req.session["currentUser"];
+      uid = currentUser._id;
+    }
+    const status = await enrollmentsDao.unenrollUserFromCourse(uid, cid);
+    res.send(status);
+  };
+  app.delete("/api/users/:uid/courses/:cid", unenrollUserFromCourse);
 
   //makes the deletuser option available from the DAO as a restful API for integration with the user interface which encodes the id of the user to remove as a path parameter.
   const deleteUser = async (req, res) => {

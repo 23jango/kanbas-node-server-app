@@ -1,4 +1,6 @@
+import "dotenv/config"; //import dotenv library to read configurations in the local environment (mongoose related)
 import express from 'express'; // equivalent to import
+import mongoose from "mongoose"; //load the mongoose library
 import Hello from "./Hello.js"
 import Lab5 from "./Lab5/index.js";
 import cors from "cors";
@@ -11,6 +13,13 @@ import ModuleRoutes from "./Kanbas/Modules/routes.js";
 import AssignmentRoutes from "./Kanbas/Assignments/routes.js";
 
 import EnrollmentsRoutes from './Kanbas/Enrollments/routes.js';
+
+
+const CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kanbas"
+mongoose.connect(CONNECTION_STRING);
+// connect mongoose to the kanbas database
+
+
 
 
 const app = express() // create new express instance

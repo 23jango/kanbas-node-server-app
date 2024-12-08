@@ -1,30 +1,38 @@
-import db from "../Database/index.js";
-let { users } = db;
-// export const createUser = (user) => {
-//   const newUser = { ...user, _id: Date.now() };
-//   users = [...users, newUser];
-//   return newUser;
-//  };
-export const findAllUsers = () => users;
+import model from "./model.js";
 
-export const findUserById = (userId) =>
-  users.find((user) => user._id === userId);
+//retrieve all  users from user collection
+export const findAllUsers = () => model.find();
 
-//  export const findUserByUsername = (username) => users.find((user) => user.username === username);
+//finding by users' first of last name
+export const findUsersByPartialName = (partialName) => {
+  const regex = new RegExp(partialName, "i"); // 'i' makes it case-insensitive
+  //creating a regular expression used to pattern match the firstName or lastName fields of the documents in the users collection
+  return model.find({
+    $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }], //regex- regular expression
+  });
+};
+
+export const findUsersByRole = (role) => model.find({ role: role }); // or just model.find({ role })
+
+//retrieving user document through users primary key
+export const findUserById = (userId) => model.findById(userId);
 
 export const findUserByCredentials = (username, password) =>
-  users.find(
-    (user) => user.username === username && user.password === password
-  );
+  model.findOne({ username, password });
 
+//update a singluar user by getting its userID and updating the matching fields in the user parameter
 export const updateUser = (userId, user) =>
-  (users = users.map((u) => (u._id === userId ? user : u)));
+  model.updateOne({ _id: userId }, { $set: user });
 
-export const deleteUser = (userId) =>
-  (users = users.filter((u) => u._id !== userId));
+//removes a single user from the database based on its primary key
+export const deleteUser = (userId) => model.deleteOne({ _id: userId });
 
-export const createUser = (user) =>
-  (users = [...users, { ...user, _id: Date.now() }]);
-  
+//if yopu wanna insert a new user object into the users collection
+export const createUser = (user) => {
+  delete user._id // remove _id field if user wants to pass in a new one
+  return model.create(user);
+}
+
 export const findUserByUsername = (username) =>
-  users.find((user) => user.username === username);
+  model.findOne({ username: username });
+
